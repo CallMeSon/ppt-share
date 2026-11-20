@@ -28,13 +28,8 @@ try {
   const page = await app.firstWindow()
   await page.waitForSelector('header')
   const attr = (n) => page.evaluate((k) => document.documentElement.dataset[k], n)
-  // Output tab open behind the dialog, to watch it follow the Sound section.
-  const ctl = page.getByRole('tab', { name: 'Output' })
-  if ((await ctl.getAttribute('aria-selected')) !== 'true') await ctl.click()
-  const outPanel = page.getByTestId('output-panel')
-  const outHead = outPanel.getByRole('button', { name: 'Output', exact: true })
-  if ((await outHead.getAttribute('aria-expanded')) !== 'true') await outHead.click()
-  await page.getByTestId('audio-route').waitFor()
+  const LABEL = { local: 'Local device', omt: 'Network', both: 'Both' }
+  const routeNow = () => page.evaluate(async () => (await window.api.getSettings()).audio.route)
   const checked = (tid) =>
     page.evaluate(
       (t) => document.querySelector(`[data-testid=${t}] [aria-checked=true]`)?.textContent ?? null,
@@ -61,28 +56,23 @@ try {
   )
   await page.click('[data-testid=settings-reduce-motion]')
   check((await attr('reduceMotion')) !== undefined, 'reduce motion attr set')
-  // Sound section: route and device mirror Controls > Output, both directions.
+  // Sound section: route and device mirror the Sound chip popover.
   await page.waitForSelector('[data-testid=settings-audio-device]')
-  check((await checked('settings-audio-route')) === (await checked('audio-route')), 'routes match')
+  check((await checked('settings-audio-route')) === LABEL[await routeNow()], 'Settings route matches the saved route')
   await page.click('[data-testid=settings-audio-route] >> text=Both')
-  await page.waitForFunction(
-    () =>
-      document.querySelector('[data-testid=audio-route] [aria-checked=true]')?.textContent ===
-      'Both'
-  )
-  check(savedAudio().route === 'both', 'route saved from Settings; Output section follows')
+  await page.waitForFunction(async () => (await window.api.getSettings()).audio.route === 'both')
+  check(savedAudio().route === 'both', 'route saved from Settings')
   await page.evaluate(() => window.api.patchAudio({ route: 'omt' }))
   await page.reload()
   await page.waitForSelector('header')
-  check((await checked('audio-route')) === 'Network', 'route from the API persists after reload')
+  check((await routeNow()) === 'omt', 'route from the API persists after reload')
   await page.click('button.gear')
   await page.waitForSelector('[data-testid=settings-audio-device]')
   check((await checked('settings-audio-route')) === 'Network', 'Settings shows the saved route')
   // A saved device that is not connected shows in both pickers.
   await page.evaluate(() => window.api.patchAudio({ deviceId: 'gone-device' }))
   await page.getByTestId('settings-audio-missing').waitFor()
-  await page.getByTestId('audio-missing').waitFor()
-  check(true, 'missing saved device warns in Settings and in Output')
+  check(true, 'missing saved device warns in Settings')
   await page.evaluate(() => window.api.patchAudio({ deviceId: null, route: 'local' }))
   await page.getByTestId('settings-audio-missing').waitFor({ state: 'detached' })
   // Tab reaches the select.

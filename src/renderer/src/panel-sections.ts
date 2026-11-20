@@ -1,8 +1,8 @@
 // Right panel state that survives a restart: the selected tab and which sections are open.
 // Pure: the store is passed in (localStorage in the app, a map in tests).
 
-export type PanelTab = 'controls' | 'output' | 'info'
-export type SectionId = 'transition' | 'deck-settings' | 'output' | 'network' | 'notes'
+export type PanelTab = 'controls' | 'info'
+export type SectionId = 'transition' | 'deck-settings' | 'notes'
 
 export interface KeyValueStore {
   getItem(key: string): string | null
@@ -15,8 +15,6 @@ const OPEN_KEY = 'panel-open'
 export const DEFAULT_OPEN: Readonly<Record<SectionId, boolean>> = {
   transition: true,
   'deck-settings': true,
-  output: false,
-  network: false,
   notes: true
 }
 
@@ -40,7 +38,9 @@ function write(store: KeyValueStore, key: string, value: string): void {
 
 export function loadPanelTab(store: KeyValueStore): PanelTab {
   const v = read(store, TAB_KEY)
-  return v === 'info' || v === 'output' || v === 'controls' ? v : 'controls'
+  // Output moved to the header chips (2026-11-19): an old selection falls back to Controls.
+  if (v === 'output') return 'controls'
+  return v === 'info' || v === 'controls' ? v : 'controls'
 }
 
 export function savePanelTab(store: KeyValueStore, tab: PanelTab): void {
@@ -62,6 +62,7 @@ export function loadOpenSections(store: KeyValueStore): Record<SectionId, boolea
     const v = (parsed as Record<string, unknown>)[id]
     if (typeof v === 'boolean') out[id] = v
   }
+  // Old saved ids (output, network) are not in IDS and are ignored.
   return out
 }
 

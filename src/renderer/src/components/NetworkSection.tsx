@@ -12,6 +12,12 @@ interface Props {
   omtStatus: NetStatus | null
   ndiStatus: NetStatus | null
   onSaved(s: Settings): void
+  /**
+   * `shared` renders the box labelled "Shared by OMT and NDI" shown in both the OMT and
+   * NDI header popovers (same state). `standalone` keeps the "Network" section title for the
+   * old Output panel (no longer used, kept for compatibility).
+   */
+  variant?: 'shared' | 'standalone'
 }
 
 const FPS = [
@@ -20,16 +26,18 @@ const FPS = [
 ] as const
 
 /**
- * "Network" part of the output popover: settings every network output (OMT, NDI)
- * shares. Today that is the frame rate. Changing it restarts the streams, so with
- * receivers connected on any of them it asks first.
+ * Settings every network output (OMT, NDI) shares: frame rate and "Send content only".
+ * Changing the frame rate restarts the streams, so with receivers connected on any of
+ * them it asks first. In the header popovers it is shown in both the OMT and NDI popovers
+ * as the "Shared by OMT and NDI" box (`variant="shared"`).
  */
 export function NetworkSection({
   fps,
   sendContentOnly,
   omtStatus,
   ndiStatus,
-  onSaved
+  onSaved,
+  variant = 'standalone'
 }: Props): React.JSX.Element {
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -71,14 +79,8 @@ export function NetworkSection({
     focusChosen()
   }
 
-  return (
-    <section className="pop-section" aria-labelledby="network-title" data-testid="network-section">
-      <div className="pop-head">
-        <h3 className="pop-title" id="network-title">
-          Network
-        </h3>
-      </div>
-
+  const body = (
+    <>
       <div className="field" ref={fpsBox}>
         <span className="row-label" id="network-fps-title">
           Frame rate
@@ -161,6 +163,26 @@ export function NetworkSection({
           {error}
         </p>
       )}
+    </>
+  )
+
+  if (variant === 'shared') {
+    return (
+      <div className="shared" data-testid="network-shared">
+        <div className="t">Shared by OMT and NDI</div>
+        {body}
+      </div>
+    )
+  }
+
+  return (
+    <section className="pop-section" aria-labelledby="network-title" data-testid="network-section">
+      <div className="pop-head">
+        <h3 className="pop-title" id="network-title">
+          Network
+        </h3>
+      </div>
+      {body}
     </section>
   )
 }

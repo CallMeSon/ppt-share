@@ -21,7 +21,6 @@ import { NextPanel } from './components/NextPanel'
 import { AppTour } from './components/AppTour'
 import { markTourDone, shouldOpenTour, tourDone } from './app-tour'
 import { DeckSettings } from './components/DeckSettings'
-import { OutputStatus } from './components/OutputStatus'
 import { useOutputSettings } from './components/useOutputSettings'
 import {
   loadOpenSections,
@@ -159,17 +158,6 @@ function App({
   }
   const toggleSection = (id: SectionId, open: boolean): void =>
     setOpenSections((cur) => saveOpenSection(localStorage, cur, id, open))
-  // The header output status leads to the Output tab: open its section, read the settings again.
-  const showOutput = (): void => {
-    choosePanelTab('output')
-    toggleSection('output', true)
-    output.reload()
-    requestAnimationFrame(() => {
-      const sec = document.querySelector<HTMLElement>('[data-testid=output-section]')
-      sec?.scrollIntoView({ block: 'nearest' })
-      sec?.querySelector<HTMLElement>('[role=switch]')?.focus()
-    })
-  }
   const [theme, setTheme] = useState<Theme>(() =>
     document.documentElement.dataset.theme === 'light' ? 'light' : 'dark'
   )
@@ -1154,7 +1142,6 @@ function App({
         onNewEvent={openNewEvent}
         program={program}
         output={output}
-        onOpenOutput={showOutput}
         theme={theme}
         onSetTheme={chooseTheme}
         airName={events.find((e) => e.id === program.airEvent)?.name ?? ''}
@@ -1359,14 +1346,6 @@ function App({
               onSetDeckFit={setDeckFit}
               onSetDeckAudio={setDeckAudio}
               onEventUpdated={replaceEvent}
-            />
-          }
-          output={
-            <OutputStatus
-              out={output}
-              program={program}
-              isOpen={(id) => openSections[id]}
-              onToggle={toggleSection}
             />
           }
         />

@@ -15,7 +15,6 @@ import { Segmented } from './Segmented'
 
 const TABS: readonly { id: PanelTab; label: string }[] = [
   { id: 'controls', label: 'Controls' },
-  { id: 'output', label: 'Output' },
   { id: 'info', label: 'Info' }
 ]
 const TRANSITIONS = [
@@ -24,10 +23,10 @@ const TRANSITIONS = [
 ] as const
 
 /**
- * Right panel: underlined tabs Controls, Output and Info. Up next stays above the tabs (it
- * never collapses). Controls holds Transition and Deck settings, Output holds the Output and
- * Network sections, Info holds Notes. All panes stay mounted; the unselected one is hidden,
- * so controls keep their state.
+ * Right panel: underlined tabs Controls and Info. Up next stays above the tabs (it
+ * never collapses). Controls holds Transition and Deck settings, Info holds Notes. All
+ * panes stay mounted; the unselected one is hidden, so controls keep their state. Output
+ * and network settings live in the header chips (OutputMenu).
  */
 export function NextPanel({
   decks,
@@ -41,8 +40,7 @@ export function NextPanel({
   isOpen,
   onToggle,
   navigation,
-  deckSettings,
-  output
+  deckSettings
 }: {
   tab: PanelTab
   onTab(tab: PanelTab): void
@@ -52,8 +50,6 @@ export function NextPanel({
   navigation: React.ReactNode
   /** Body of the Deck settings section. */
   deckSettings: React.ReactNode
-  /** The Output and Network sections. */
-  output: React.ReactNode
   decks: DeckMeta[]
   sections: SectionMeta[]
   state: ProgramState
@@ -303,15 +299,6 @@ export function NextPanel({
           >
             {deckSettings}
           </PanelSection>
-        </div>
-        <div
-          className="pane"
-          id="ppane-output"
-          role="tabpanel"
-          aria-labelledby="ptab-output"
-          hidden={tab !== 'output'}
-        >
-          {output}
         </div>
       </div>
     </aside>

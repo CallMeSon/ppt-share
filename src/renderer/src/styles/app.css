@@ -337,20 +337,70 @@ select.text-input:disabled {
 /* HDMI status + output popover */
 header > .output-menu {
   position: relative;
+  gap: 4px;
 }
-.output-btn {
+.output-slot {
+  position: relative;
+  display: flex;
+}
+.output-chip {
   display: flex;
   align-items: center;
   gap: 8px;
   height: var(--h-sm);
   max-width: 100%;
-  padding: 0 12px;
+  padding: 0 10px;
   font-weight: 500;
   white-space: nowrap;
+  border: 1px solid transparent;
+  border-radius: var(--r);
+  background: none;
+  color: var(--text-2);
 }
-button.output-btn:hover,
-.output-btn[aria-expanded='true'] {
+button.output-chip:hover {
+  background: var(--raised);
+}
+.output-chip[aria-expanded='true'] {
   background: var(--raised-hi);
+  border-color: var(--line-hi);
+  color: var(--text);
+}
+.output-chip[data-tone='ok'] {
+  color: var(--accent-ink);
+}
+.output-chip[data-tone='off'] {
+  color: var(--text-3);
+}
+/* Output popovers hang under their chip, 372 wide, never wider than the window. */
+.popover.output-pop {
+  width: 372px;
+  max-width: calc(100vw - 16px);
+  z-index: 20;
+  padding: 0;
+  gap: 0;
+}
+.output-pop > .pop-section {
+  padding: 16px;
+}
+.output-pop > .pop-section + .pop-section,
+.output-pop > .shared {
+  border-top: 0;
+}
+.output-pop .shared {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 0 16px 16px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--raised);
+}
+.output-pop .shared > .t {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-2);
 }
 .ind {
   display: inline-flex;
@@ -358,14 +408,6 @@ button.output-btn:hover,
   gap: 8px;
 }
 .ind[data-tone='off'] {
-  color: var(--text-3);
-}
-.output-btn .res {
-  min-width: 0;
-  max-width: 26ch;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font: 400 12px var(--font-mono);
   color: var(--text-3);
 }
 .popover {
@@ -552,11 +594,8 @@ button.output-btn:hover,
   padding-top: 16px;
   border-top: 1px solid var(--line);
 }
-/* Under 1600px the open-event tabs get the room: the canvas size is also in the Program footer. */
+/* Under 1600px the network chips show the short word (OMT 2) to leave room for the event tabs. */
 @media (max-width: 1599px) {
-  header .canvas-tag {
-    display: none;
-  }
   /* The full status stays for readers; the short word (OMT 2) is what shows. */
   header .ind-full {
     position: absolute;

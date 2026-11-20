@@ -26,8 +26,11 @@ describe('panel tab', () => {
     expect(loadPanelTab(memory())).toBe('controls')
     expect(loadPanelTab(memory({ 'panel-tab': 'nope' }))).toBe('controls')
   })
+  it('maps an old saved "output" tab to controls', () => {
+    expect(loadPanelTab(memory({ 'panel-tab': 'output' }))).toBe('controls')
+  })
   it('round-trips every tab', () => {
-    for (const tab of ['controls', 'output', 'info'] as const) {
+    for (const tab of ['controls', 'info'] as const) {
       const s = memory()
       savePanelTab(s, tab)
       expect(loadPanelTab(s)).toBe(tab)
@@ -49,29 +52,28 @@ describe('panel tab', () => {
 })
 
 describe('open sections', () => {
-  it('defaults: output and network collapsed, the rest open', () => {
+  it('defaults: transition, deck settings and notes open', () => {
     expect(loadOpenSections(memory())).toEqual({
       transition: true,
       'deck-settings': true,
-      output: false,
-      network: false,
       notes: true
     })
   })
   it('corrupt JSON or wrong shapes fall back to the defaults', () => {
     expect(loadOpenSections(memory({ 'panel-open': '{oops' }))).toEqual(DEFAULT_OPEN)
     expect(loadOpenSections(memory({ 'panel-open': '[1]' }))).toEqual(DEFAULT_OPEN)
+    // Old saved ids (output, network) and unknown keys are ignored without error.
     expect(
       loadOpenSections(memory({ 'panel-open': '{"network":"yes","bogus":false,"output":false}' }))
-    ).toEqual({ ...DEFAULT_OPEN, output: false })
+    ).toEqual(DEFAULT_OPEN)
   })
   it('saveOpenSection round-trips and returns the new map', () => {
     const s = memory()
-    const next = saveOpenSection(s, DEFAULT_OPEN, 'network', true)
-    expect(next.network).toBe(true)
-    expect(next.transition).toBe(true)
+    const next = saveOpenSection(s, DEFAULT_OPEN, 'transition', false)
+    expect(next.transition).toBe(false)
+    expect(next.notes).toBe(true)
     expect(loadOpenSections(s)).toEqual(next)
-    expect(saveOpenSection(s, next, 'transition', false).transition).toBe(false)
-    expect(loadOpenSections(s).transition).toBe(false)
+    expect(saveOpenSection(s, next, 'notes', false).notes).toBe(false)
+    expect(loadOpenSections(s).notes).toBe(false)
   })
 })

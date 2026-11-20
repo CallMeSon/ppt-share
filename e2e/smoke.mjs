@@ -691,14 +691,14 @@ const savedHdmi = () =>
 const savedAudio = () =>
   JSON.parse(fs.readFileSync(path.join(userData, 'settings.json'), 'utf8')).audio
 
-/** The Output and Network sections of the Output tab (they replaced the header popover). */
-async function openOutputPopover(win) {
-  const tab = win.getByRole('tab', { name: 'Output' })
-  if ((await tab.getAttribute('aria-selected')) !== 'true') await tab.click()
-  const pop = win.getByTestId('output-panel')
-  for (const name of ['Output', 'Network']) {
-    const head = pop.getByRole('button', { name, exact: true })
-    if ((await head.getAttribute('aria-expanded')) !== 'true') await head.click()
+/**
+ * Opens the popover of a header output chip (hdmi, omt, ndi, sound or canvas) and returns it.
+ * Only one popover is open at a time; an open one for the same chip is reused.
+ */
+async function openOutputPopover(win, chip = 'hdmi') {
+  const pop = win.locator(`[data-testid=output-popover][data-popover=${chip}]`)
+  if (!(await pop.isVisible().catch(() => false))) {
+    await win.getByTestId(`output-chip-${chip}`).click()
   }
   await pop.waitFor()
   return pop
@@ -1135,7 +1135,7 @@ async function hdmiChecks(win) {
   check(
     (await hStatus.textContent()) === 'HDMI off' &&
       (await hStatus.getAttribute('data-tone')) === 'off',
-    `header shows the HDMI indicator: "${await win.getByTestId('output-status').textContent()}"`
+    `header shows the HDMI indicator: "${await win.getByTestId('output-chip-hdmi').textContent()}"`
   )
   const real = await app.evaluate(({ screen }) => ({
     primary: screen.getPrimaryDisplay().id,
@@ -1379,7 +1379,7 @@ async function simulatedHdmiChecks(win, real) {
     )
     check(savedHdmi().enabled && savedHdmi().displayId === proj.id, 'settings.json hdmi saved')
     await pop.screenshot({ path: path.join(path.dirname(shot), 'task-11-popover-showing.png') })
-    await win.getByTestId('output-status').screenshot({
+    await win.getByTestId('output-chip-hdmi').screenshot({
       path: path.join(path.dirname(shot), 'task-11-header.png')
     })
 
@@ -1721,7 +1721,7 @@ async function videoChecks(win, tally) {
 
   // 1b. Audio (Task 5): the HDMI section lists the sound devices and mutes the
   //     output's video at once; the choice is saved in settings.json.
-  const apop = await openOutputPopover(win)
+  const apop = await openOutputPopover(win, 'sound')
   const devSel = apop.getByTestId('audio-device')
   // The device list arrives asynchronously (enumerateDevices); a machine without
   // any audio output only ever has the Default option.
@@ -1836,7 +1836,7 @@ async function videoChecks(win, tally) {
   )
   await win.evaluate(() => window.api.setAudio({ deviceId: null, muted: false }))
   await missing.waitFor({ state: 'detached' })
-  // The Output section is inline in the Controls tab now: nothing to close.
+  // The output popovers close with Escape or a click outside.
   await blur()
 
   // 1c. A hidden output window is silent (I2). Unplugging the display hides the
@@ -2102,7 +2102,7 @@ async function videoChecks(win, tally) {
     (t) => t.kind === 'video' && t.src.endsWith('/003.mp4') && t.ended,
     'slide 3 plays to its end'
   )
-  // Transition lives in the Controls tab; openOutputPopover leaves Output selected.
+  // Transition lives in the Controls tab.
   await win.getByRole('tab', { name: 'Controls' }).click()
   await win.getByRole('radio', { name: 'Fade' }).click()
   await blur()
@@ -2943,7 +2943,7 @@ try {
   const deck43 = win.locator('.deck', { has: win.locator('.name', { hasText: 'sample-4x3' }) })
   await deck43.locator('.meta', { hasText: '2 slides' }).waitFor({ timeout: 60_000 })
   check(true, '4:3 PDF imported')
-  // Transition lives in the Controls tab; openOutputPopover leaves Output selected.
+  // Transition lives in the Controls tab.
   await win.getByRole('tab', { name: 'Controls' }).click()
   await win.getByRole('radio', { name: 'Fade' }).click()
   await win.waitForFunction(
@@ -3113,7 +3113,7 @@ try {
   )
   await sleep(800)
   await noBlackGap(win, () => win.keyboard.press('Space'), 'heavy slides, Next with Cut')
-  // Transition lives in the Controls tab; openOutputPopover leaves Output selected.
+  // Transition lives in the Controls tab.
   await win.getByRole('tab', { name: 'Controls' }).click()
   await win.getByRole('radio', { name: 'Fade' }).click()
   await noBlackGap(win, () => win.keyboard.press('Space'), 'heavy slides, Next with Fade')
@@ -3301,7 +3301,7 @@ try {
   // Mute and the audio device persist across an app restart (same user data
   // folder). A real output device is chosen when this machine has one, else a
   // saved device that is not connected.
-  const mpop = await openOutputPopover(win)
+  const mpop = await openOutputPopover(win, 'sound')
   const mdev = mpop.getByTestId('audio-device')
   await mdev
     .locator('option')
@@ -3334,7 +3334,7 @@ try {
   app2 = await electron.launch(launchOptions)
   const win2 = await app2.firstWindow()
   await win2.waitForSelector('.app')
-  await win2.getByTestId('output-status').click()
+  await win2.getByTestId('output-chip-sound').click()
   const mute2 = win2.getByTestId('audio-mute')
   await mute2.waitFor()
   check(

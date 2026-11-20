@@ -23,8 +23,6 @@ interface Props {
   onNewEvent(): void
   program: ProgramState
   output: OutputSettingsState
-  /** Shows the Output section of the Output tab. */
-  onOpenOutput(): void
   theme: Theme
   onSetTheme(theme: Theme): void
   /** The on-air event's name, for the Off air question. */
@@ -100,7 +98,7 @@ export function Header(p: Props): React.JSX.Element {
         onNew={p.onNewEvent}
       />
       <span className="grow" />
-      <OutputMenu program={p.program} out={p.output} onOpen={p.onOpenOutput} />
+      <OutputMenu program={p.program} out={p.output} />
       {/* Console only: Home has its own Off air in the on-air banner. */}
       {p.view === 'console' && p.airState !== 'idle' && (
         <OffAirButton eventName={p.airName} onConfirm={p.onOffAir} testId="header-offair" popover />
